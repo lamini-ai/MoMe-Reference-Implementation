@@ -1,5 +1,4 @@
 from lamini.api.embedding import Embedding
-
 from tqdm import tqdm
 
 import faiss
@@ -8,9 +7,7 @@ import os
 import numpy as np
 
 import logging
-
 logger = logging.getLogger(__name__)
-
 
 class LaminiIndex:
     def __init__(self, loader=None, config={}, embedding_dimension=384):

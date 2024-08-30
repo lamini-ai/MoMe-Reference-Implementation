@@ -29,19 +29,23 @@ def evaluate_model(model, tokenizer, data):
         for item in tqdm(data):
             input_text = f"Question: {item['question']}\nAnswer:"
             inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
+
             outputs = model.generate(
-                **inputs,
+                input_ids=inputs.input_ids,
+                do_sample=False,
                 max_new_tokens=50,
-                num_return_sequences=1,
-                no_repeat_ngram_size=2
+                return_dict_in_generate=True,
             )
-            generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+            generated_ids = outputs.sequences[0]
+            generated_text = tokenizer.decode(generated_ids, skip_special_tokens=True)
             generated_answer = generated_text.split("Answer:")[-1].strip()
-            if generated_answer.lower() == item['answer'].lower():
-                correct += 1
-            total += 1
-    accuracy = correct / total
-    return accuracy
+
+            print(f"Question: {item['question']}")
+            print(f"Model's answer: {generated_answer}")
+            print(f"Correct answer: {item['answer']}")
+
+    return 
 
 def load_model_weights(model_path):
     if SAFETENSORS_AVAILABLE:
@@ -56,8 +60,13 @@ def load_model_weights(model_path):
         raise
 
 def load_model_and_tokenizer(base_model_name, raft_model_path, index_path):
+
+    token = os.getenv("HF_API_TOKEN")
+    if not token:
+        raise ValueError("HF_API_TOKEN environment variable is not set")
+
     logger.debug(f"Loading base model... {base_model_name}")
-    base_model = AutoModelForCausalLM.from_pretrained(base_model_name, token="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")
+    base_model = AutoModelForCausalLM.from_pretrained(base_model_name, token=token)
     
     logger.debug(f"Loading RAFT config... {raft_model_path}")
     raft_config = LlamaRaftConfig.from_pretrained(raft_model_path)
@@ -69,7 +78,7 @@ def load_model_and_tokenizer(base_model_name, raft_model_path, index_path):
     raft_model.initialize(base_model)
     
     logger.debug(f"Loading tokenizer... {base_model_name}")
-    tokenizer = AutoTokenizer.from_pretrained(base_model_name, token="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")
+    tokenizer = AutoTokenizer.from_pretrained(base_model_name, token=token)
     
     logger.debug(f"RAFT model: {raft_model}")
     return raft_model, tokenizer
@@ -80,8 +89,8 @@ def main():
 
     # Set paths
     base_model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct" 
-    raft_model_path = "/home/llama/MoME-Reference-Implementation/nithya/checkpoints/checkpoint-5000"
-    index_path = "/home/llama/MoME-Reference-Implementation/nithya/checkpoints/index"
+    raft_model_path = "model/checkpoint"
+    index_path = "model/index"
     
     # Initialize the model and tokenizer
     model, tokenizer = load_model_and_tokenizer(base_model_name, raft_model_path, index_path)

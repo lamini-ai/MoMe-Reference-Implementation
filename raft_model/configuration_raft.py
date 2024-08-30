@@ -37,7 +37,7 @@ class LlamaRaftConfig(PretrainedConfig):
         index_k=2,
         mlp_bias=False,
         **kwargs
-    ):
+    ):  
         self.vocab_size = vocab_size
         self.max_position_embeddings = max_position_embeddings
         self.hidden_size = hidden_size
