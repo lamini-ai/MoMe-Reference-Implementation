@@ -53,6 +53,18 @@ def test_mome_model(jsonl_file_path):
         metadata={"format": "pt"},
     )
 
+    # Load data from JSONL file
+    data = load_jsonl_data(jsonl_file_path)
+
+    # Process each entry in the JSONL file
+    for entry in data:
+        prompt = f"<|begin_of_text|><|start_header_id|>user<|end_header_id|> Consider the following company: {entry['ticker']} and quarter: {entry['quarter']}. {entry['question']} <|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+
+        result = evaluate_model(mome_model, base_model['tokenizer'], device, prompt)
+        print(f"Company: {entry['ticker']}, Quarter: {entry['quarter']}")
+        print(f"Question: {entry['question']}")
+        print(f"Model response: {result}\n")
+
 if __name__ == "__main__":
     jsonl_file_path = "data/banks_qa.jsonl" 
     test_mome_model(jsonl_file_path) 
