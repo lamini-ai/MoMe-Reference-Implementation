@@ -2,7 +2,8 @@ import os
 import logging
 import json
 import torch
-from mome_model.modeling_mome import load_mome_model_for_inference, load_base_model_and_tokenizer
+from src.modeling_mome import load_mome_model_for_inference, load_base_model_and_tokenizer
+from safetensors.torch import save_file as safe_save_file
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ def evaluate_model(model, tokenizer, device, prompt):
     return generated[len(truncated_prompt):]
 
 def test_mome_model(jsonl_file_path):
-    base_model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    base_model_name = "hf-internal-testing/tiny-random-MistralForCausalLM"
     mome_model_path = "model/checkpoint"
     device = infer_device()
     
@@ -43,13 +44,22 @@ def test_mome_model(jsonl_file_path):
     base_model = load_base_model_and_tokenizer(base_model_name, device)
     mome_model = load_mome_model_for_inference(base_model['model'], mome_model_path)
     
+    print(mome_model)
+
+    state_dict = mome_model.state_dict()
+    safe_save_file(
+        state_dict,
+        os.path.join("full_model_file", "model.safetensors"),
+        metadata={"format": "pt"},
+    )
+
     # Load data from JSONL file
     data = load_jsonl_data(jsonl_file_path)
-    
+
     # Process each entry in the JSONL file
     for entry in data:
         prompt = f"<|begin_of_text|><|start_header_id|>user<|end_header_id|> Consider the following company: {entry['ticker']} and quarter: {entry['quarter']}. {entry['question']} <|eot_id|><|start_header_id|>assistant<|end_header_id|>"
-        
+
         result = evaluate_model(mome_model, base_model['tokenizer'], device, prompt)
         print(f"Company: {entry['ticker']}, Quarter: {entry['quarter']}")
         print(f"Question: {entry['question']}")

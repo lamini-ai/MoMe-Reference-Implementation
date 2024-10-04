@@ -1,0 +1,9 @@
+{
+  "base_model_name_or_path": "hf-internal-testing/tiny-random-MistralForCausalLM",
+  "index_k": 2,
+  "mome_type": "RAFT",
+  "path": null,
+  "r_value": 64,
+  "sequence_length": 2048,
+  "task_type": "CAUSAL_LM"
+}
